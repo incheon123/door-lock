@@ -1,0 +1,4 @@
+keypad.c:11:6:scan_Rx	8	static
+keypad.c:118:6:checkPassword	16	static
+keypad.c:130:6:set_remain_time_progress	16	static
+keypad.c:139:6:unset_remain_time_progress	16	static
