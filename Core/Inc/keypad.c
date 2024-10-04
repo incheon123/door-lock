@@ -8,6 +8,10 @@
 #include <string.h>
 #include "keypad.h"
 
+short success_set_remain_time_progress = 0;
+
+static Pos pos;
+
 char scan_Rx(void)
 {
 	HAL_GPIO_WritePin(R1_GPIO_Port, R1_Pin, GPIO_PIN_RESET);
@@ -117,13 +121,10 @@ char scan_Rx(void)
  */
 char checkPassword(const char *pw, const char *setted_pw)
 {
-	printf("checkPassword called\n");
 	if(!strcmp(pw, setted_pw))
 	{
-		printf("Access Success\n");//오늘 처음 알았는데 문자열 마지막에 \n 추가 안해주면  Tera Term에서 인식 못함....
 	}else
 	{
-		printf("Access Denied\n");
 	}
 }
 
@@ -134,10 +135,28 @@ void set_remain_time_progress(void)
 	  HD44780_SetCursor(i, 1);
 	  HD44780_PrintSpecialChar(0xFF);
 	}
+	success_set_remain_time_progress = 1;
 }
 
 void unset_remain_time_progress(short rt)
 {
   HD44780_SetCursor(rt, 1);
   HD44780_PrintSpecialChar(0x20);
+}
+
+void clear_character(short col, short row)
+{
+	HD44780_SetCursor(col, row);
+	HD44780_PrintSpecialChar(0x20);
+}
+void set_cursor_pos(short col, short row)
+{
+	pos.col = col;
+	pos.row = row;
+	HD44780_SetCursor(col, row);
+	printf("col : %d row : %d\n", pos.col, pos.row);
+}
+Pos get_cursor_pos()
+{
+	return pos;
 }

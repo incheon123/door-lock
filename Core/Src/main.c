@@ -53,8 +53,10 @@ TIM_HandleTypeDef htim3;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-volatile int gTimerCnt;
-volatile int remain_time_start_idx = 9;
+volatile int gTimerCnt = -1;
+volatile int remain_time_start_idx = 10;
+volatile short unlock = 0;								// check that if user press any buttons
+extern short success_set_remain_time_progress;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -129,7 +131,6 @@ int main(void)
   char btn_key;									// a character that user press([1~9], [A-D])
   char input_key[2] = "\0";
   char pw[MAX_CHAR_SIZE] = "\0";					// password that has input_numkey
-  short unlock = 0;								// check that if user press any buttons
 
   char password[PW_MAX_SIZE] = "123456\0";		// door-lock password
 
@@ -149,52 +150,78 @@ int main(void)
   short pw_idx = 0;
   while (1)
   {
+	  /* time out */
+	  int timeout = ((remain_time_start_idx < 0) ? 0x10 : 0x00);
+
 	  /* check corret btn_key */
-	  while( (btn_key = scan_Rx()) == 255 ) ;
+	  if( (btn_key = scan_Rx()) == 255)
+	  {
+		  if(!(timeout & 0x10))
+		  {
+			  continue;
+		  }
+	  }
 
 	  /* set checkStrRemoved when condition is true */
-	  if((btn_key != -1) && (checkStrRemoved == 0x00) )
+	  if((btn_key != 255) && (checkStrRemoved == 0x00) && (btn_key != '-') )
 	  {
 		  checkStrRemoved = 0x01;
 	  }
 
-	  /* if "Enter Password" string is removed */
+	  /* if "Enter Password" string is removed 딱 한 번 실행되는 블록*/
 	  if(checkStrRemoved == 0x01)
 	  {
 		  HD44780_Clear();
 		  checkStrRemoved = -1;
 		  unlock = 0x01;
 
-		  for(int k = 0; k < 10; k++)
-		  {
-			  unset_remain_time_progress(k);
-		  }
 		  set_remain_time_progress();
+		  gTimerCnt = 999;
 	  }
 
 	  /* print keypad value into i2c lcd */
 	  if(unlock)
 	  {
+
 		  input_key[0] = btn_key;
 
+		  /* remove */
 		  if(!strcmp(input_key, "-"))
 		  {
-			  HD44780_Clear();
-			  pw_idx = 0;
-
+			  Pos current_cursor_pos = get_cursor_pos();
+			  if(current_cursor_pos.col >= 0 && current_cursor_pos.col <= 15)
+			  {
+				  clear_character(current_cursor_pos.col, current_cursor_pos.row);
+				  set_cursor_pos(--current_cursor_pos.col, current_cursor_pos.row);
+				  pw[pw_idx--] = NULL;
+			  }
 			  continue;
 		  }
 
-		  if(!strcmp(input_key, "*"))
+		  int checkPw = (((!strcmp(input_key, "*")) == 1) ? 0x01 : 0x00);
+		  if(checkPw || timeout)
 		  {
 			  checkPassword(pw, password);
+
+				if(timeout & 0x10)
+				{
+					  remain_time_start_idx = 10;
+					  set_remain_time_progress();
+					  Pos pos = get_cursor_pos();
+					  printf("col : %d row : %d\n", pos.col, pos.row);
+					  printf("time out\n");
+				}else{
+					printf(" * clicked\n");
+				}
+
 		  }else
 		  {
+			  /* write */
 			  if(pw_idx < MAX_CHAR_SIZE)
 			  {
 				  pw[pw_idx] = btn_key;
-				  printf("pw_idx : %2d   key : %s\n", pw_idx, input_key);
-				  HD44780_SetCursor(pw_idx, 0);
+//				  HD44780_SetCursor(pw_idx, 0);
+				  set_cursor_pos(pw_idx, 0);
 				  HD44780_PrintStr(input_key);
 			  }
 		  }
@@ -428,18 +455,17 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-	gTimerCnt++;
-	if(gTimerCnt == 1000)
+	if(unlock)
 	{
-		gTimerCnt = 0;
-		printf("Interrupt!!\n");
-		if(remain_time_start_idx >= 0)
+		gTimerCnt++;
+		if(gTimerCnt == 1000)
 		{
-			unset_remain_time_progress(remain_time_start_idx--);
-		}else
-		{
-			remain_time_start_idx = 9;
-			set_remain_time_progress();
+			if(remain_time_start_idx >= 0 && success_set_remain_time_progress)
+			{
+				unset_remain_time_progress(remain_time_start_idx);
+				remain_time_start_idx--;
+			}
+			gTimerCnt = 0;
 		}
 	}
 }

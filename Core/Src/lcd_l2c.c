@@ -49,6 +49,7 @@ uint8_t special2[8] = {
 
 void HD44780_Init(uint8_t rows)
 {
+
   dpRows = rows;
 
   dpBacklight = LCD_BACKLIGHT;
@@ -100,6 +101,7 @@ void HD44780_Init(uint8_t rows)
   HD44780_CreateSpecialChar(1, special2);
 
   HD44780_Home();
+  set_cursor_pos(-1, 0);
 }
 
 void HD44780_Clear()
