@@ -188,6 +188,7 @@ int main(void)
 		  /* remove */
 		  if(!strcmp(input_key, "-"))
 		  {
+			  /* issue -> "pw_idx--" */
 			  Pos current_cursor_pos = get_cursor_pos();
 			  if(current_cursor_pos.col >= 0 && current_cursor_pos.col <= 15)
 			  {
@@ -198,21 +199,19 @@ int main(void)
 			  continue;
 		  }
 
+		  /* check time out */
 		  int checkPw = (((!strcmp(input_key, "*")) == 1) ? 0x01 : 0x00);
 		  if(checkPw || timeout)
 		  {
 			  checkPassword(pw, password);
-
-				if(timeout & 0x10)
-				{
-					  remain_time_start_idx = 10;
-					  set_remain_time_progress();
-					  Pos pos = get_cursor_pos();
-					  printf("col : %d row : %d\n", pos.col, pos.row);
-					  printf("time out\n");
-				}else{
-					printf(" * clicked\n");
-				}
+			  if(timeout & 0x10)
+			  {
+				  HD44780_Clear();
+				  success_set_remain_time_progress = 0;
+				  set_remain_time_progress();
+				  remain_time_start_idx = 10;
+				  pw_idx = -1;
+			  }
 
 		  }else
 		  {
@@ -220,7 +219,6 @@ int main(void)
 			  if(pw_idx < MAX_CHAR_SIZE)
 			  {
 				  pw[pw_idx] = btn_key;
-//				  HD44780_SetCursor(pw_idx, 0);
 				  set_cursor_pos(pw_idx, 0);
 				  HD44780_PrintStr(input_key);
 			  }
@@ -464,8 +462,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			{
 				unset_remain_time_progress(remain_time_start_idx);
 				remain_time_start_idx--;
+				gTimerCnt = 0;
 			}
-			gTimerCnt = 0;
 		}
 	}
 }
