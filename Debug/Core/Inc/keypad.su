@@ -1,7 +1,9 @@
 keypad.c:15:6:scan_Rx	8	static
-keypad.c:122:6:checkPassword	16	static
-keypad.c:131:6:set_remain_time_progress	16	static
-keypad.c:141:6:unset_remain_time_progress	16	static
-keypad.c:147:6:clear_character	16	static
-keypad.c:152:6:set_cursor_pos	16	static
-keypad.c:159:5:get_cursor_pos	16	static
+keypad.c:125:6:checkPassword	16	static
+keypad.c:134:6:set_remain_time_progress	16	static
+keypad.c:144:6:unset_remain_time_progress	16	static
+keypad.c:150:6:clear_character	16	static
+keypad.c:155:6:set_cursor_pos	16	static
+keypad.c:162:5:get_cursor_pos	16	static
+keypad.c:167:7:check_change_pw_key_pressed	16	static
+keypad.c:186:7:changePassword	32	static
