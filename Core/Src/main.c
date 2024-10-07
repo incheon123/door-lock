@@ -57,6 +57,7 @@ volatile int gTimerCnt = -1;
 volatile int remain_time_start_idx = 10;
 volatile short unlock = 0;								// check that if user press any buttons
 extern short success_set_remain_time_progress;
+unsigned short gp_timer = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -131,8 +132,9 @@ int main(void)
   char btn_key;									// a character that user press([1~9], [A-D])
   char input_key[2] = "\0";
   char pw[MAX_CHAR_SIZE] = "\0";					// password that has input_numkey
-
+  short long_press_cnt = 0;
   char password[PW_MAX_SIZE] = "123456\0";		// door-lock password
+  short change_pw_key_pressed = 0;
 
   HD44780_Init(2);
   HD44780_PrintStr(str);
@@ -159,6 +161,22 @@ int main(void)
 		  if(!(timeout & 0x10))
 		  {
 			  continue;
+		  }
+	  }
+
+	  // 비밀번호 변경 키 -> 2초간 Long Press
+	  if(btn_key == '#')
+	  {
+		  short retval = check_change_pw_key_pressed(&long_press_cnt, &gp_timer);
+		  if(retval)
+		  {
+			  if(changePassword(&password, PW_MAX_SIZE))
+			  {
+				  printf("success password\n");
+			  }else
+			  {
+				  printf("failed password\n");
+			  }
 		  }
 	  }
 
@@ -453,6 +471,7 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
+	gp_timer++;
 	if(unlock)
 	{
 		gTimerCnt++;
