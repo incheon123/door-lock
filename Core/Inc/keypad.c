@@ -93,21 +93,24 @@ char scan_Rx(void)
 	HAL_GPIO_WritePin(R4_GPIO_Port, R4_Pin, GPIO_PIN_RESET);
 	if(!(HAL_GPIO_ReadPin(C1_GPIO_Port, C1_Pin)))
 	{
+		printf("%d\n", HAL_GPIO_ReadPin(C1_GPIO_Port, C1_Pin));
 		while(!(HAL_GPIO_ReadPin(C1_GPIO_Port, C1_Pin)));
 		return '0';
 	}
 	if(!(HAL_GPIO_ReadPin(C2_GPIO_Port, C2_Pin)))
 	{
-		while(!(HAL_GPIO_ReadPin(C2_GPIO_Port, C2_Pin)));
+		printf("2\n");
+		while(!(HAL_GPIO_ReadPin(C2_GPIO_Port, C2_Pin))); // prevent from long press.
 		return '-';
 	}
 	if(!(HAL_GPIO_ReadPin(C3_GPIO_Port, C3_Pin)))
 	{
-		while(!(HAL_GPIO_ReadPin(C3_GPIO_Port, C3_Pin)));
+//		while(!(HAL_GPIO_ReadPin(C3_GPIO_Port, C3_Pin)));
 		return '#';
 	}
 	if(!(HAL_GPIO_ReadPin(C4_GPIO_Port, C4_Pin)))
 	{
+		printf("4\n");
 		while(!(HAL_GPIO_ReadPin(C4_GPIO_Port, C4_Pin)));
 		return '*';
 	}
@@ -159,4 +162,55 @@ void set_cursor_pos(short col, short row)
 Pos get_cursor_pos()
 {
 	return pos;
+}
+
+short check_change_pw_key_pressed(short* long_press_cnt, short* gp_timer)
+{
+	while( !HAL_GPIO_ReadPin(C3_GPIO_Port, C3_Pin) &&
+		   !HAL_GPIO_ReadPin(R4_GPIO_Port, R4_Pin) )
+	{
+		if(*long_press_cnt == 0)
+		{
+			printf("실행\n");
+			*long_press_cnt = *gp_timer;
+		}else if(*gp_timer >= *long_press_cnt + 2000)
+		{
+
+			return 1;
+		}
+	}
+
+	*long_press_cnt = 0;
+	return 0;
+}
+short changePassword(char* original_password, short size)
+{
+	HD44780_Clear();
+	HD44780_PrintStr("Change Password");
+
+	char key;
+	short pw_idx = 0;
+	char pw[10] = "\0";
+	while(1)
+	{
+		printf("%d\n", pw_idx);
+		while((key = scan_Rx()) == 255) ;
+
+		if( key == '#')
+		{
+			continue;
+		}else if(key != 255 && pw_idx <= 5)
+		{
+			HD44780_Clear();
+			pw[pw_idx++] = key;
+			HD44780_PrintStr(pw);
+		}else if(key == '-')
+		{
+			*original_password = pw;
+
+			return 1;
+		}
+	}
+
+	return 0;
 }
