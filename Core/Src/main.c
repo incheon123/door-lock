@@ -25,8 +25,8 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <string.h>
-#include "keypad.h"
 #include "lcd_i2c.h"
+#include "keypad.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -58,6 +58,7 @@ volatile int remain_time_start_idx = 10;
 volatile short unlock = 0;								// check that if user press any buttons
 extern short success_set_remain_time_progress;
 unsigned short gp_timer = 0;
+short running_pw = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -136,8 +137,7 @@ int main(void)
   char password[PW_MAX_SIZE] = "123456\0";		// door-lock password
   short change_pw_key_pressed = 0;
 
-  HD44780_Init(2);
-  HD44780_PrintStr(str);
+  home(str);
 
 
   if(HAL_TIM_Base_Start_IT(&htim3) != HAL_OK)
@@ -165,19 +165,21 @@ int main(void)
 	  }
 
 	  // 비밀번호 변경 키 -> 2초간 Long Press
-	  if(btn_key == '#')
+	  if(btn_key == '#' && !running_pw)
 	  {
 		  short retval = check_change_pw_key_pressed(&long_press_cnt, &gp_timer);
 		  if(retval)
 		  {
-			  if(changePassword(&password, PW_MAX_SIZE))
+			  if(changePassword(password, PW_MAX_SIZE))
 			  {
-				  printf("success password\n");
+				  printf("success password %s\n", password);
+				  // Enter Password 화면 띄우기
 			  }else
 			  {
 				  printf("failed password\n");
 			  }
 		  }
+		  continue;
 	  }
 
 	  /* set checkStrRemoved when condition is true */
@@ -221,20 +223,26 @@ int main(void)
 		  int checkPw = (((!strcmp(input_key, "*")) == 1) ? 0x01 : 0x00);
 		  if(checkPw || timeout)
 		  {
-			  checkPassword(pw, password);
-			  if(timeout & 0x10)
-			  {
-				  HD44780_Clear();
-				  success_set_remain_time_progress = 0;
-				  set_remain_time_progress();
-				  remain_time_start_idx = 10;
-				  pw_idx = -1;
-			  }
 
+			  if(checkPw & 0x01)
+			  {
+				  checkPassword(pw, password);
+			  }else if(timeout & 0x10)
+			  {
+				  printf("timeout\n");
+				  checkPassword(pw, password);
+			  }
+			  HD44780_Clear();
+			  success_set_remain_time_progress = 0;
+			  set_remain_time_progress();
+			  remain_time_start_idx = 10;
+			  pw_idx = -1;
+
+			  sprintf(pw, "%s", '\0');
 		  }else
 		  {
 			  /* write */
-			  if(pw_idx < MAX_CHAR_SIZE)
+			  if(pw_idx < MAX_CHAR_SIZE && strcmp(input_key,"#"))
 			  {
 				  pw[pw_idx] = btn_key;
 				  set_cursor_pos(pw_idx, 0);
@@ -479,9 +487,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		{
 			if(remain_time_start_idx >= 0 && success_set_remain_time_progress)
 			{
+				running_pw = 1;
 				unset_remain_time_progress(remain_time_start_idx);
 				remain_time_start_idx--;
 				gTimerCnt = 0;
+			}else{
+				running_pw = 0;
 			}
 		}
 	}
