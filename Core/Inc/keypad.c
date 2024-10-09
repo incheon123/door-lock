@@ -93,13 +93,11 @@ char scan_Rx(void)
 	HAL_GPIO_WritePin(R4_GPIO_Port, R4_Pin, GPIO_PIN_RESET);
 	if(!(HAL_GPIO_ReadPin(C1_GPIO_Port, C1_Pin)))
 	{
-		printf("%d\n", HAL_GPIO_ReadPin(C1_GPIO_Port, C1_Pin));
 		while(!(HAL_GPIO_ReadPin(C1_GPIO_Port, C1_Pin)));
 		return '0';
 	}
 	if(!(HAL_GPIO_ReadPin(C2_GPIO_Port, C2_Pin)))
 	{
-		printf("2\n");
 		while(!(HAL_GPIO_ReadPin(C2_GPIO_Port, C2_Pin))); // prevent from long press.
 		return '-';
 	}
@@ -110,7 +108,6 @@ char scan_Rx(void)
 	}
 	if(!(HAL_GPIO_ReadPin(C4_GPIO_Port, C4_Pin)))
 	{
-		printf("4\n");
 		while(!(HAL_GPIO_ReadPin(C4_GPIO_Port, C4_Pin)));
 		return '*';
 	}
@@ -126,8 +123,10 @@ char checkPassword(const char *pw, const char *setted_pw)
 {
 	if(!strcmp(pw, setted_pw))
 	{
+		printf("Good\n");
 	}else
 	{
+		printf("Failed!!\n");
 	}
 }
 
@@ -169,11 +168,11 @@ short check_change_pw_key_pressed(short* long_press_cnt, short* gp_timer)
 	while( !HAL_GPIO_ReadPin(C3_GPIO_Port, C3_Pin) &&
 		   !HAL_GPIO_ReadPin(R4_GPIO_Port, R4_Pin) )
 	{
-		if(*long_press_cnt == 0)
+		if(*long_press_cnt == 0)	// 0s
 		{
 			printf("실행\n");
 			*long_press_cnt = *gp_timer;
-		}else if(*gp_timer >= *long_press_cnt + 2000)
+		}else if(*gp_timer >= *long_press_cnt + 2000)	// 2s
 		{
 
 			return 1;
@@ -183,7 +182,7 @@ short check_change_pw_key_pressed(short* long_press_cnt, short* gp_timer)
 	*long_press_cnt = 0;
 	return 0;
 }
-short changePassword(char* original_password, short size)
+short changePassword(char original_password[], short size)
 {
 	HD44780_Clear();
 	HD44780_PrintStr("Change Password");
@@ -193,7 +192,6 @@ short changePassword(char* original_password, short size)
 	char pw[10] = "\0";
 	while(1)
 	{
-		printf("%d\n", pw_idx);
 		while((key = scan_Rx()) == 255) ;
 
 		if( key == '#')
@@ -206,11 +204,17 @@ short changePassword(char* original_password, short size)
 			HD44780_PrintStr(pw);
 		}else if(key == '-')
 		{
-			*original_password = pw;
-
+			for(int i = 0 ; i < 6; i++)
+				original_password[i] = pw[i];
+			original_password[6] = '\0';
 			return 1;
 		}
 	}
 
 	return 0;
+}
+void home(char* str)
+{
+	HD44780_Init(2);
+	HD44780_PrintStr(str);
 }
