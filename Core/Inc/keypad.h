@@ -27,6 +27,7 @@ void unset_remain_time_progress(short rt);
 void clear_character(short col, short row);
 void set_cursor_pos(short col, short row);
 Pos get_cursor_pos();
+void finish_system(char* msg);
 
 short check_change_pw_key_pressed(short* long_press_cnt, short* gp_timer);
 short changePassword(char original_password[], short size);
