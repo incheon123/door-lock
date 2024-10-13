@@ -124,6 +124,7 @@ char checkPassword(const char *pw, const char *setted_pw)
 	if(!strcmp(pw, setted_pw))
 	{
 		printf("Good\n");
+		finish_system("Door Unlocked");
 	}else
 	{
 		printf("Failed!!\n");
@@ -170,7 +171,6 @@ short check_change_pw_key_pressed(short* long_press_cnt, short* gp_timer)
 	{
 		if(*long_press_cnt == 0)	// 0s
 		{
-			printf("실행\n");
 			*long_press_cnt = *gp_timer;
 		}else if(*gp_timer >= *long_press_cnt + 2000)	// 2s
 		{
@@ -217,4 +217,14 @@ void home(char* str)
 {
 	HD44780_Init(2);
 	HD44780_PrintStr(str);
+}
+void finish_system(char* msg)
+{
+	HD44780_Clear();
+	HD44780_PrintStr(msg);
+	HAL_Delay(2000);
+	HD44780_Clear();
+	HD44780_Home();
+	HD44780_NoBacklight();
+	HD44780_NoDisplay();
 }
