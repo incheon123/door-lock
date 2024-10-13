@@ -170,14 +170,15 @@ int main(void)
 		  short retval = check_change_pw_key_pressed(&long_press_cnt, &gp_timer);
 		  if(retval)
 		  {
+			  __disable_irq();
 			  if(changePassword(password, PW_MAX_SIZE))
 			  {
 				  printf("success password %s\n", password);
-				  // Enter Password 화면 띄우기
 			  }else
 			  {
 				  printf("failed password\n");
 			  }
+			  __enable_irq();
 		  }
 		  continue;
 	  }
