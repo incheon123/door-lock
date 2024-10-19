@@ -12,6 +12,7 @@
 #include "main.h"
 
 #define remain_time 10
+#define MAX_SIZE 6
 
 typedef struct
 {
@@ -23,7 +24,7 @@ char scan_Rx(void);
 short get_Cx_value(short nums[]);
 char checkPassword(const char pw[], const char setted_pw[]);
 void set_remain_time_progress(void);
-void unset_remain_time_progress(short rt);
+void decrease_remainTime(short rt);
 void clear_character(short col, short row);
 void set_cursor_pos(short col, short row);
 Pos get_cursor_pos();
