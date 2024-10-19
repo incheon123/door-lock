@@ -54,9 +54,9 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 volatile int gTimerCnt = -1;
-volatile int remain_time_start_idx = 10;
-volatile short unlock = 0;								// check that if user press any buttons
-extern short success_set_remain_time_progress;
+volatile int remainTime_idx = 10;
+volatile short enable_inputPw = 0;								// check that if user press any buttons
+extern short enable_remainTime_progress;
 unsigned short gp_timer = 0;
 short running_pw = 0;
 /* USER CODE END PV */
@@ -129,14 +129,14 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   char* str = "Enter Password";
-  short checkStrRemoved = 0x00;
+  short isTextRemoved = 0x00;
   char btn_key;									// a character that user press([1~9], [A-D])
   char input_key[2] = "\0";
   char pw[MAX_CHAR_SIZE] = "\0";					// password that has input_numkey
   short long_press_cnt = 0;
   char password[PW_MAX_SIZE] = "123456\0";		// door-lock password
   short change_pw_key_pressed = 0;
-
+  int timeout;
   home(str);
 
 
@@ -153,22 +153,26 @@ int main(void)
   while (1)
   {
 	  /* time out */
-	  int timeout = ((remain_time_start_idx < 0) ? 0x10 : 0x00);
+	  timeout = ((remainTime_idx < 0) ? 0x10 : 0x00);
 
-	  /* check corret btn_key */
+	  /* input key and check correct input key */
 	  if( (btn_key = scan_Rx()) == 255)
 	  {
+		  /* if time is 0 */
 		  if(!(timeout & 0x10))
 		  {
 			  continue;
+		  }else
+		  {
+			  goto checkPw;
 		  }
 	  }
 
-	  // ë¹„ë°€ë²ˆí˜¸ ë³€ê²½ í‚¤ -> 2ì´ˆê°„ Long Press
-	  if(btn_key == '#' && !running_pw)
+	  // ë¹„ë?ë²ˆí˜¸ ë³?ê²? ?‚¤ -> 2ì´ˆê°„ Long Press
+	  if(btn_key == '#' && !running_pw)		// ë¹„ë?ë²ˆí˜¸ ?ž…? ¥ ?™”ë©´ì—?„œ?Š” ë³?ê²? ê¸°ëŠ¥ ?‚¬?š©?•  ?ˆ˜ ?—†?Œ
 	  {
-		  short retval = check_change_pw_key_pressed(&long_press_cnt, &gp_timer);
-		  if(retval)
+		  short is_longPress = check_change_pw_key_pressed(&long_press_cnt, &gp_timer);
+		  if(is_longPress)
 		  {
 			  __disable_irq();
 			  if(changePassword(password, PW_MAX_SIZE))
@@ -183,45 +187,45 @@ int main(void)
 		  continue;
 	  }
 
-	  /* set checkStrRemoved when condition is true */
-	  if((btn_key != 255) && (checkStrRemoved == 0x00) && (btn_key != '-') )
+	  /* set isTextRemoved when condition is true */
+	  if( (btn_key != 255 && btn_key != '-') && (isTextRemoved == 0x00) )
 	  {
-		  checkStrRemoved = 0x01;
+		  isTextRemoved = 0x01;
 	  }
-
-	  /* if "Enter Password" string is removed ë”± í•œ ë²ˆ ì‹¤í–‰ë˜ëŠ” ë¸”ë¡*/
-	  if(checkStrRemoved == 0x01)
+//	  isStart_inputPw(btn_key, &isTextRemoved, btn_key);
+	  /* if "Enter Password" string is removed ?”± ?•œ ë²? ?‹¤?–‰?˜?Š” ë¸”ë¡*/
+	  if(isTextRemoved == 0x01)
 	  {
 		  HD44780_Clear();
-		  checkStrRemoved = -1;
-		  unlock = 0x01;
+		  isTextRemoved = -1;
+		  enable_inputPw = 0x01;
 
 		  set_remain_time_progress();
 		  gTimerCnt = 999;
 	  }
 
 	  /* print keypad value into i2c lcd */
-	  if(unlock)
+	  if(enable_inputPw)
 	  {
 
 		  input_key[0] = btn_key;
 
-		  /* remove */
-		  if(!strcmp(input_key, "-"))
-		  {
-			  /* issue -> "pw_idx--" */
-			  Pos current_cursor_pos = get_cursor_pos();
-			  if(current_cursor_pos.col >= 0 && current_cursor_pos.col <= 15)
-			  {
-				  clear_character(current_cursor_pos.col, current_cursor_pos.row);
-				  set_cursor_pos(--current_cursor_pos.col, current_cursor_pos.row);
-				  pw[pw_idx--] = NULL;
-			  }
-			  continue;
-		  }
-
+		  /* remove. this logic is not valid 4 * 3 keypad */
+//		  if(!strcmp(input_key, "-"))
+//		  {
+//			  /* issue -> "pw_idx--" */
+//			  Pos current_cursor_pos = get_cursor_pos();
+//			  if(current_cursor_pos.col >= 0 && current_cursor_pos.col <= 15)
+//			  {
+//				  clear_character(current_cursor_pos.col, current_cursor_pos.row);
+//				  set_cursor_pos(--current_cursor_pos.col, current_cursor_pos.row);
+//				  pw[pw_idx--] = NULL;
+//			  }
+//			  continue;
+//		  }
 		  /* check time out */
 		  int checkPw = (((!strcmp(input_key, "*")) == 1) ? 0x01 : 0x00);
+	  checkPw:
 		  if(checkPw || timeout)
 		  {
 
@@ -234,9 +238,9 @@ int main(void)
 				  checkPassword(pw, password);
 			  }
 			  HD44780_Clear();
-			  success_set_remain_time_progress = 0;
+			  enable_remainTime_progress = 0;
 			  set_remain_time_progress();
-			  remain_time_start_idx = 10;
+			  remainTime_idx = 10;
 			  pw_idx = -1;
 
 			  sprintf(pw, "%s", '\0');
@@ -424,7 +428,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, LD2_Pin|R2_Pin|R3_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, RST_Pin|EN_Pin|R2_Pin|R3_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(R1_GPIO_Port, R1_Pin, GPIO_PIN_RESET);
@@ -438,8 +442,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : LD2_Pin R2_Pin R3_Pin */
-  GPIO_InitStruct.Pin = LD2_Pin|R2_Pin|R3_Pin;
+  /*Configure GPIO pins : RST_Pin EN_Pin R2_Pin R3_Pin */
+  GPIO_InitStruct.Pin = RST_Pin|EN_Pin|R2_Pin|R3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -481,16 +485,16 @@ static void MX_GPIO_Init(void)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	gp_timer++;
-	if(unlock)
+	if(enable_inputPw)
 	{
 		gTimerCnt++;
 		if(gTimerCnt == 1000)
 		{
-			if(remain_time_start_idx >= 0 && success_set_remain_time_progress)
+			if(remainTime_idx >= 0 && enable_remainTime_progress)
 			{
 				running_pw = 1;
-				unset_remain_time_progress(remain_time_start_idx);
-				remain_time_start_idx--;
+				decrease_remainTime(remainTime_idx);
+				remainTime_idx--;
 				gTimerCnt = 0;
 			}else{
 				running_pw = 0;
