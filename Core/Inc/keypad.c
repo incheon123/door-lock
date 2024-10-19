@@ -8,7 +8,7 @@
 #include <string.h>
 #include "keypad.h"
 
-short success_set_remain_time_progress = 0;
+short enable_remainTime_progress = 0;
 
 static Pos pos;
 
@@ -34,11 +34,11 @@ char scan_Rx(void)
 		while(!(HAL_GPIO_ReadPin(C3_GPIO_Port, C3_Pin)));
 		return '3';
 	}
-	if(!(HAL_GPIO_ReadPin(C4_GPIO_Port, C4_Pin)))
-	{
-		while(!(HAL_GPIO_ReadPin(C4_GPIO_Port, C4_Pin)));
-		return 'A';
-	}
+//	if(!(HAL_GPIO_ReadPin(C4_GPIO_Port, C4_Pin)))
+//	{
+//		while(!(HAL_GPIO_ReadPin(C4_GPIO_Port, C4_Pin)));
+//		return 'A';
+//	}
 	HAL_GPIO_WritePin(R1_GPIO_Port, R1_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(R2_GPIO_Port, R2_Pin, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(R3_GPIO_Port, R3_Pin, GPIO_PIN_SET);
@@ -58,11 +58,11 @@ char scan_Rx(void)
 		while(!(HAL_GPIO_ReadPin(C3_GPIO_Port, C3_Pin)));
 		return '6';
 	}
-	if(!(HAL_GPIO_ReadPin(C4_GPIO_Port, C4_Pin)))
-	{
-		while(!(HAL_GPIO_ReadPin(C4_GPIO_Port, C4_Pin)));
-		return 'B';
-	}
+//	if(!(HAL_GPIO_ReadPin(C4_GPIO_Port, C4_Pin)))
+//	{
+//		while(!(HAL_GPIO_ReadPin(C4_GPIO_Port, C4_Pin)));
+//		return 'B';
+//	}
 	HAL_GPIO_WritePin(R1_GPIO_Port, R1_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(R2_GPIO_Port, R2_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(R3_GPIO_Port, R3_Pin, GPIO_PIN_RESET);
@@ -82,11 +82,11 @@ char scan_Rx(void)
 		while(!(HAL_GPIO_ReadPin(C3_GPIO_Port, C3_Pin)));
 		return '9';
 	}
-	if(!(HAL_GPIO_ReadPin(C4_GPIO_Port, C4_Pin)))
-	{
-		while(!(HAL_GPIO_ReadPin(C4_GPIO_Port, C4_Pin)));
-		return 'C';
-	}
+//	if(!(HAL_GPIO_ReadPin(C4_GPIO_Port, C4_Pin)))
+//	{
+//		while(!(HAL_GPIO_ReadPin(C4_GPIO_Port, C4_Pin)));
+//		return 'C';
+//	}
 	HAL_GPIO_WritePin(R1_GPIO_Port, R1_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(R2_GPIO_Port, R2_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(R3_GPIO_Port, R3_Pin, GPIO_PIN_SET);
@@ -94,22 +94,18 @@ char scan_Rx(void)
 	if(!(HAL_GPIO_ReadPin(C1_GPIO_Port, C1_Pin)))
 	{
 		while(!(HAL_GPIO_ReadPin(C1_GPIO_Port, C1_Pin)));
-		return '0';
+		return '*';
 	}
 	if(!(HAL_GPIO_ReadPin(C2_GPIO_Port, C2_Pin)))
 	{
-		while(!(HAL_GPIO_ReadPin(C2_GPIO_Port, C2_Pin))); // prevent from long press.
-		return '-';
+
+		while(!(HAL_GPIO_ReadPin(C2_GPIO_Port, C2_Pin)));
+		return '0';
 	}
 	if(!(HAL_GPIO_ReadPin(C3_GPIO_Port, C3_Pin)))
 	{
 //		while(!(HAL_GPIO_ReadPin(C3_GPIO_Port, C3_Pin)));
 		return '#';
-	}
-	if(!(HAL_GPIO_ReadPin(C4_GPIO_Port, C4_Pin)))
-	{
-		while(!(HAL_GPIO_ReadPin(C4_GPIO_Port, C4_Pin)));
-		return '*';
 	}
 
 	return 255;
@@ -138,10 +134,10 @@ void set_remain_time_progress(void)
 	  HD44780_SetCursor(i, 1);
 	  HD44780_PrintSpecialChar(0xFF);
 	}
-	success_set_remain_time_progress = 1;
+	enable_remainTime_progress = 1;
 }
 
-void unset_remain_time_progress(short rt)
+void decrease_remainTime(short rt)
 {
   HD44780_SetCursor(rt, 1);
   HD44780_PrintSpecialChar(0x20);
@@ -197,12 +193,12 @@ short changePassword(char original_password[], short size)
 		if( key == '#')
 		{
 			continue;
-		}else if(key != 255 && pw_idx <= 5)
+		}else if(key != '*' && key != 255 && pw_idx < MAX_SIZE)
 		{
 			HD44780_Clear();
 			pw[pw_idx++] = key;
 			HD44780_PrintStr(pw);
-		}else if(key == '-')
+		}else if(key == '*')
 		{
 			for(int i = 0 ; i < 6; i++)
 				original_password[i] = pw[i];
@@ -228,3 +224,7 @@ void finish_system(char* msg)
 	HD44780_NoBacklight();
 	HD44780_NoDisplay();
 }
+//void isStart_inputPw(int btn_key, short* isTextRemoved, )
+//{
+//
+//}
