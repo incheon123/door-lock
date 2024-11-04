@@ -2,7 +2,8 @@
  * lcd_l2c.c
  *
  *  Created on: Sep 14, 2024
- *      Author: kth
+ *
+ *  from Internet source code
  */
 
 
@@ -50,15 +51,15 @@ uint8_t special2[8] = {
 void HD44780_Init(uint8_t rows)
 {
 
-  dpRows = rows;
+  dpRows = rows; // 2
 
-  dpBacklight = LCD_BACKLIGHT;
+  dpBacklight = LCD_BACKLIGHT; // 0x08
 
-  dpFunction = LCD_4BITMODE | LCD_1LINE | LCD_5x8DOTS;
+  dpFunction = LCD_4BITMODE | LCD_1LINE | LCD_5x8DOTS; // 0x00 | 0x00 | 0x00 => 0x00
 
-  if (dpRows > 1)
+  if (dpRows > 1) // execute
   {
-    dpFunction |= LCD_2LINE;
+    dpFunction |= LCD_2LINE; // dpFunction = 0x08
   }
   else
   {
@@ -265,7 +266,7 @@ static void Write4Bits(uint8_t value)
 
 static void ExpanderWrite(uint8_t _data)
 {
-  uint8_t data = _data | dpBacklight; // 0 | 0x08
+  uint8_t data = _data | dpBacklight; // 0x08 | 0x08 => 0x08
   HAL_I2C_Master_Transmit(&hi2c1, DEVICE_ADDR, (uint8_t*)&data, 1, 10);
 }
 

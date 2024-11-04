@@ -64,9 +64,9 @@ short running_pw = 0;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -92,7 +92,6 @@ PUTCHAR_PROTOTYPE
 
 	return ch;
 }
-
 /* USER CODE END 0 */
 
 /**
@@ -123,10 +122,11 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_USART2_UART_Init();
   MX_I2C1_Init();
   MX_TIM3_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+
 
   char* str = "Enter Password";
   short isTextRemoved = 0x00;
@@ -135,7 +135,7 @@ int main(void)
   char pw[MAX_CHAR_SIZE] = "\0";					// password that has input_numkey
   short long_press_cnt = 0;
   char password[PW_MAX_SIZE] = "123456\0";		// door-lock password
-  short change_pw_key_pressed = 0;
+//  short change_pw_key_pressed = 0;
   int timeout;
   home(str);
 
@@ -164,12 +164,13 @@ int main(void)
 			  continue;
 		  }else
 		  {
+			  // if time is out and check password
 			  goto checkPw;
 		  }
 	  }
 
-	  // ë¹„ë?ë²ˆí˜¸ ë³?ê²? ?‚¤ -> 2ì´ˆê°„ Long Press
-	  if(btn_key == '#' && !running_pw)		// ë¹„ë?ë²ˆí˜¸ ?ž…? ¥ ?™”ë©´ì—?„œ?Š” ë³?ê²? ê¸°ëŠ¥ ?‚¬?š©?•  ?ˆ˜ ?—†?Œ
+	  // change pw mode
+	  if(btn_key == '#' && !running_pw)
 	  {
 		  short is_longPress = check_change_pw_key_pressed(&long_press_cnt, &gp_timer);
 		  if(is_longPress)
@@ -188,12 +189,12 @@ int main(void)
 	  }
 
 	  /* set isTextRemoved when condition is true */
-	  if( (btn_key != 255 && btn_key != '-') && (isTextRemoved == 0x00) )
+	  if( (btn_key != 255 && btn_key != '-') && (isTextRemoved == 0x00) ) // nothing pressed and not '-' key and text is not removed
 	  {
-		  isTextRemoved = 0x01;
+		  isTextRemoved = 0x01;	// the 'text' means "Enter Password".
 	  }
-//	  isStart_inputPw(btn_key, &isTextRemoved, btn_key);
-	  /* if "Enter Password" string is removed ?”± ?•œ ë²? ?‹¤?–‰?˜?Š” ë¸”ë¡*/
+
+	  /* if "Enter Password" string is removed */
 	  if(isTextRemoved == 0x01)
 	  {
 		  HD44780_Clear();
@@ -204,39 +205,21 @@ int main(void)
 		  gTimerCnt = 999;
 	  }
 
-	  /* print keypad value into i2c lcd */
+	  /* ready for receive pw */
 	  if(enable_inputPw)
 	  {
+		  input_key[0] = btn_key; //user input num key
 
-		  input_key[0] = btn_key;
-
-		  /* remove. this logic is not valid 4 * 3 keypad */
-//		  if(!strcmp(input_key, "-"))
-//		  {
-//			  /* issue -> "pw_idx--" */
-//			  Pos current_cursor_pos = get_cursor_pos();
-//			  if(current_cursor_pos.col >= 0 && current_cursor_pos.col <= 15)
-//			  {
-//				  clear_character(current_cursor_pos.col, current_cursor_pos.row);
-//				  set_cursor_pos(--current_cursor_pos.col, current_cursor_pos.row);
-//				  pw[pw_idx--] = NULL;
-//			  }
-//			  continue;
-//		  }
 		  /* check time out */
+		  // if input key is *(for confirm) checkPw = 1 or 0
 		  int checkPw = (((!strcmp(input_key, "*")) == 1) ? 0x01 : 0x00);
 	  checkPw:
 		  if(checkPw || timeout)
 		  {
 
-			  if(checkPw & 0x01)
-			  {
-				  checkPassword(pw, password);
-			  }else if(timeout & 0x10)
-			  {
-				  printf("timeout\n");
-				  checkPassword(pw, password);
-			  }
+			  checkPassword(pw, password);
+
+
 			  HD44780_Clear();
 			  enable_remainTime_progress = 0;
 			  set_remain_time_progress();
@@ -246,11 +229,11 @@ int main(void)
 			  sprintf(pw, "%s", '\0');
 		  }else
 		  {
-			  /* write */
+			  /* ready for write num key that is pressed by user */
 			  if(pw_idx < MAX_CHAR_SIZE && strcmp(input_key,"#"))
 			  {
 				  pw[pw_idx] = btn_key;
-				  set_cursor_pos(pw_idx, 0);
+				  set_cursor_pos(pw_idx, 0); // column and row
 				  HD44780_PrintStr(input_key);
 			  }
 		  }
@@ -512,7 +495,7 @@ void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
-
+	printf("HAL_UART_Init Error!\n");
   /* USER CODE END Error_Handler_Debug */
 }
 

@@ -1,4 +1,4 @@
-"Core/Inc/keypad.o"
+"Core/Src/keypad.o"
 "Core/Src/lcd_l2c.o"
 "Core/Src/main.o"
 "Core/Src/stm32f1xx_hal_msp.o"

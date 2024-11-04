@@ -1,4 +1,4 @@
-Core/Src/lcd_l2c.o: ../Core/Src/lcd_l2c.c ../Core/Src/lcd_i2c.h \
+Core/Src/lcd_l2c.o: ../Core/Src/lcd_l2c.c ../Core/Inc/lcd_i2c.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h \
  ../Core/Inc/stm32f1xx_hal_conf.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_rcc.h \
@@ -26,7 +26,7 @@ Core/Src/lcd_l2c.o: ../Core/Src/lcd_l2c.c ../Core/Src/lcd_i2c.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h
 
-../Core/Src/lcd_i2c.h:
+../Core/Inc/lcd_i2c.h:
 
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h:
 
