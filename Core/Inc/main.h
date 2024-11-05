@@ -52,9 +52,8 @@ extern "C" {
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
-
 /* USER CODE BEGIN EFP */
-
+void init_input_mode();
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
