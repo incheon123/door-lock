@@ -57,7 +57,7 @@ volatile int gTimerCnt = -1;
 volatile int remainTime_idx = 10;
 volatile short enable_inputPw = 0;								// check that if user press any buttons
 extern short enable_remainTime_progress;
-unsigned short gp_timer = 0;
+short gp_timer = 0;
 short running_pw = 0;
 /* USER CODE END PV */
 
@@ -91,6 +91,11 @@ PUTCHAR_PROTOTYPE
 	HAL_UART_Transmit(&huart2, (uint8_t*) &ch, 1, 0xFFFF);
 
 	return ch;
+}
+
+void init_input_mode()
+{
+
 }
 /* USER CODE END 0 */
 
@@ -129,13 +134,13 @@ int main(void)
 
 
   char* str = "Enter Password";
-  short isTextRemoved = 0x00;
-  char btn_key;									// a character that user press([1~9], [A-D])
-  char input_key[2] = "\0";
-  char pw[MAX_CHAR_SIZE] = "\0";					// password that has input_numkey
-  short long_press_cnt = 0;
-  char password[PW_MAX_SIZE] = "123456\0";		// door-lock password
-//  short change_pw_key_pressed = 0;
+  char input_mode = 0;							// Check whether input mode or not
+  char btn_key;									// 4 * 3 keypad number key
+  char input_key[2] = "\0";						// Convert btn_key to string
+  char pw[MAX_CHAR_SIZE] = "\0";				// Password that has input_numkey
+  short long_press_cnt = 0;						// For change password
+  char password[PW_MAX_SIZE] = "123456\0";		// Door lock password
+  short current_cursor = 0;						// Position of current cursor
   int timeout;
   home(str);
 
@@ -149,10 +154,9 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  short pw_idx = 0;
   while (1)
   {
-	  /* time out */
+	  /* check time out */
 	  timeout = ((remainTime_idx < 0) ? 0x10 : 0x00);
 
 	  /* input key and check correct input key */
@@ -189,16 +193,16 @@ int main(void)
 	  }
 
 	  /* set isTextRemoved when condition is true */
-	  if( (btn_key != 255 && btn_key != '-') && (isTextRemoved == 0x00) ) // nothing pressed and not '-' key and text is not removed
+	  if( (btn_key != 255 && btn_key != '-') && (input_mode == 0) ) // nothing pressed and not '-' key and text is not removed
 	  {
-		  isTextRemoved = 0x01;	// the 'text' means "Enter Password".
+		  input_mode = 1;	// the 'text' means "Enter Password".
 	  }
 
-	  /* if "Enter Password" string is removed */
-	  if(isTextRemoved == 0x01)
+	  /* if input mode */
+	  if(input_mode == 1)
 	  {
 		  HD44780_Clear();
-		  isTextRemoved = -1;
+		  input_mode = -1;
 		  enable_inputPw = 0x01;
 
 		  set_remain_time_progress();
@@ -224,21 +228,22 @@ int main(void)
 			  enable_remainTime_progress = 0;
 			  set_remain_time_progress();
 			  remainTime_idx = 10;
-			  pw_idx = -1;
+			  current_cursor = -1;
 
-			  sprintf(pw, "%s", '\0');
+//			  sprintf(pw, "%s", '\0');
+			  sprintf(pw, "%s", "\0");
 		  }else
 		  {
 			  /* ready for write num key that is pressed by user */
-			  if(pw_idx < MAX_CHAR_SIZE && strcmp(input_key,"#"))
+			  if(current_cursor < MAX_CHAR_SIZE && strcmp(input_key,"#"))
 			  {
-				  pw[pw_idx] = btn_key;
-				  set_cursor_pos(pw_idx, 0); // column and row
+				  pw[current_cursor] = btn_key;
+				  set_cursor_pos(current_cursor, 0); // column and row
 				  HD44780_PrintStr(input_key);
 			  }
 		  }
 	  }
-	  pw_idx++;
+	  current_cursor++;
 
     /* USER CODE END WHILE */
 
