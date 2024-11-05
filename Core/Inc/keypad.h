@@ -29,7 +29,8 @@ void clear_character(short col, short row);
 void set_cursor_pos(short col, short row);
 Pos get_cursor_pos();
 void finish_system(char* msg);
-
+void home(char*);
 short check_change_pw_key_pressed(short* long_press_cnt, short* gp_timer);
 short changePassword(char original_password[], short size);
+
 #endif /* INC_KEYPAD_H_ */
