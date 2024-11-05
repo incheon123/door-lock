@@ -4,8 +4,6 @@
  *  Created on: Sep 17, 2024
  *      Author: kth
  */
-#include <stdio.h>
-#include <string.h>
 #include "keypad.h"
 
 short enable_remainTime_progress = 0;
@@ -104,7 +102,6 @@ char scan_Rx(void)
 	}
 	if(!(HAL_GPIO_ReadPin(C3_GPIO_Port, C3_Pin)))
 	{
-//		while(!(HAL_GPIO_ReadPin(C3_GPIO_Port, C3_Pin)));
 		return '#';
 	}
 
@@ -148,6 +145,7 @@ void clear_character(short col, short row)
 	HD44780_SetCursor(col, row);
 	HD44780_PrintSpecialChar(0x20);
 }
+
 void set_cursor_pos(short col, short row)
 {
 	pos.col = col;
